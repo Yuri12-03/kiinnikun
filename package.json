@@ -1,0 +1,16 @@
+{
+  "name": "kiinnikun",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": ["mobile"],
+  "scripts": {
+    "start": "npm --workspace @kiinnikun/mobile run start",
+    "start:tunnel": "npm --workspace @kiinnikun/mobile run start -- --tunnel ngrok",
+    "web": "npm --workspace @kiinnikun/mobile run web",
+    "typecheck": "npm --workspace @kiinnikun/mobile run typecheck && tsc --project tsconfig.edge.json",
+    "lint": "npm --workspace @kiinnikun/mobile run lint",
+    "test": "node --experimental-strip-types --test tests/*.test.ts"
+  },
+  "engines": { "node": ">=24.13.0" }
+}

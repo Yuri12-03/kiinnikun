@@ -1,0 +1,6 @@
+project_id = "kiinnikun"
+
+# JWTs are verified inside the handler with Supabase Auth (including new signing keys).
+# The platform check is disabled only to avoid legacy-JWT/new-key incompatibility.
+[functions.generate-menu]
+verify_jwt = false

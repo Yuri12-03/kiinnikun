@@ -148,6 +148,13 @@ vite.config.ts.timestamp-*
 # Astro generated types
 .astro/
 
+# Expo and local reports
+.expo/
+expo-env.d.ts
+test-results/
+playwright-report/
+supabase/.temp/
+
 # Turbo Repo (https://turborepo.dev/)
 .turbo
 
