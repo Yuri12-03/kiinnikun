@@ -31,3 +31,11 @@ RLSで本人の読み込みと挿入だけを許可し、クライアントが�
 - ユニットテストでAI失敗・不正回答・利用制限時の履歴非記録、成功時の記録順序、記録失敗時のエラー応答、120分の受付を確認。
 - ブラウザで未ログイン時のおすすめ案内と、スライダーで120分を選べること・上限を超えないことを確認。[画面](screenshots/history-duration-120.jpg)
 - ログイン後のおすすめのタップ操作・再起動後の表示はAndroid実機で別途確認。
+
+## 更新用APK
+
+- [EASビルド](https://expo.dev/accounts/yuri12-03/projects/kiinnikun/builds/f81b644b-49c2-42b1-9008-5336e3c895af)：成功。
+- [APK 1.0.3](https://expo.dev/artifacts/eas/aCQFghsmTtowlxKbfgq1NgixfRGiiu6ImD0ffa33pSc.apk)、versionCode 4。
+- アプリ名、Androidライブラリ、埋め込みJS内の履歴取得コードを確認。
+- 初回1.0.0のAPKと署名用証明書が一致することを確認。
+- SHA-256：`589D8F6B858473D195C1D2B06974BE70724B44E1FDB3ED49C4487D9E0FE37831`。
