@@ -1,6 +1,6 @@
 {
   "name": "@kiinnikun/mobile",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "expo-router/entry",
   "dependencies": {
     "@supabase/supabase-js": "^2.119.2",

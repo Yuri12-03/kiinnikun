@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View, type PressableProps, type ViewProps } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View, type PressableProps, type ViewProps } from 'react-native';
 
 export const colors = {
   background: '#F7F6F2', ink: '#232B25', muted: '#737A70', line: '#DFE2D9',
@@ -6,8 +6,8 @@ export const colors = {
 };
 
 export function Brand() {
-  return <View style={styles.brand}><View style={styles.mark}><Text style={styles.markText}>k.</Text></View>
-    <Text style={styles.brandText}>kiinnikun<Text style={{ color: colors.orange }}>.</Text></Text>
+  return <View style={styles.brand}><Image source={require('../../assets/kinni-icon.png')} style={styles.mark} accessible={false} />
+    <Text style={styles.brandText}>きんに君</Text>
     <View style={styles.brandBadge}><Text style={styles.brandBadgeText}>YOUR TRAINING PARTNER</Text></View>
   </View>;
 }
@@ -25,8 +25,7 @@ export const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.background },
   content: { width: '100%', maxWidth: 600, alignSelf: 'center', padding: 24, paddingBottom: 40, gap: 24 },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  mark: { backgroundColor: colors.green, width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  markText: { color: 'white', fontWeight: '900', fontSize: 24, lineHeight: 28 },
+  mark: { backgroundColor: colors.green, width: 32, height: 32, borderRadius: 10 },
   brandText: { color: colors.ink, fontSize: 22, fontWeight: '800', letterSpacing: -1 },
   brandBadge: { marginLeft: 'auto' },
   brandBadgeText: { fontSize: 8, fontWeight: '700', letterSpacing: 0.7, color: colors.muted },

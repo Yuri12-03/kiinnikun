@@ -1,28 +1,27 @@
 {
   "expo": {
-    "name": "kiinnikun",
+    "name": "きんに君",
     "slug": "kiinnikun",
     "scheme": "kiinnikun",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/kinni-icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "package": "com.yuri1203.kiinnikun",
-      "versionCode": 1,
+      "versionCode": 2,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#294B3A",
+        "foregroundImage": "./assets/kinni-adaptive-foreground.png",
+        "monochromeImage": "./assets/kinni-adaptive-foreground.png"
       },
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/kinni-favicon.png"
     },
     "plugins": [
       "expo-router",
