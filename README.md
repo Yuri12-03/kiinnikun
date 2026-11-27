@@ -8,7 +8,15 @@
 - AIが種目を実施順に提案し、セット数・回数・休憩時間をカードで表示する。
 - 提案理由を開閉し、条件を変えて再提案する。
 - 入力エラー、生成中、通信失敗、利用制限、回答不備を扱う。
-- メニュー保存、種目の差し替え、身長・体重と重量提案、実績記録は次のIssue。
+- Issue #1では、メニュー保存、種目の差し替え、身長・体重と重量提案、実績記録を対象外としました。
+
+## Issue #2：代替種目への差し替え
+
+メニューの各カードから「別の種目に変更」を開き、器具が空いていない・器具がない・難しい、の理由を選ぶとGeminiが最大3候補を提案します。選んだ種目だけを置き換え、ほかの種目と順番を保ちます。使えない器具・除外した種目は同じメニュー内の次の差し替えに引き継がれます。
+
+主に鍛える筋肉と動作・難易度を照合します。同じ「脚」でも太もも前側をふくらはぎの種目には置き換えません。条件に合う候補がなければ、無理に生成せず空の結果を案内します。痛み・違和感の場合は自動提案せず中止を案内します。
+
+代替候補の生成も初回提案と共通の1日10回制限に含まれます。候補がなくAIを呼ばない場合は消費しません。キャンセルではメニューを変更しませんが、AIへ依頼済みの利用回数は戻しません。詳細は[検証記録](docs/issue-2-validation.md)を参照してください。
 
 ## 構成
 
@@ -92,7 +100,7 @@ npx supabase login
 npx supabase link --project-ref YOUR_PROJECT_REF
 npx supabase db push --remote --yes
 npx supabase secrets set --env-file supabase/.env.local --yes
-npx supabase functions deploy generate-menu --use-api --yes
+npx supabase functions deploy generate-menu replace-exercise --use-api --yes
 ```
 
 `YOUR_PROJECT_REF`はDashboard URLの`/project/`に続くIDです。CLI 3では`db push`に`--remote`を付けて接続済みのクラウドDBを指定します。`--use-api`を付けるとDockerを起動せずに関数をデプロイできます。
@@ -148,6 +156,8 @@ DBマイグレーションの実行、実際の認証とGemini接続、iPhone・
 
 ```powershell
 ./scripts/smoke-deployment.ps1
+# 代替提案は実際のAIを1回呼び、候補なしの経路も確認します
+./scripts/smoke-deployment.ps1 -ReplacementOnly
 ```
 
 このスクリプトはSupabase CLIのログイン済み管理権限を使用し、許可された確認済みユーザーの一時セッションを発行して、実際のAI提案を2回依頼します。メールやパスワードの入力は不要で、キーやセッションを表示・ファイル保存しません。最後にテスト用セッションをログアウトします。AI利用枠とアプリの1日上限を2回分使います。スマホ画面の操作確認は別途必要です。

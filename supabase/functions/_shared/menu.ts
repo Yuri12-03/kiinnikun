@@ -42,6 +42,10 @@ export const EXERCISES: Exercise[] = [
   { id: 'leg-press', name: 'レッグプレス', bodyParts: ['legs'], equipment: 'レッグプレスマシン', gymOnly: true, unilateral: false },
   { id: 'leg-curl', name: 'レッグカール', bodyParts: ['legs'], equipment: 'レッグカールマシン', gymOnly: true, unilateral: false },
   { id: 'leg-extension', name: 'レッグエクステンション', bodyParts: ['legs'], equipment: 'レッグエクステンションマシン', gymOnly: true, unilateral: false },
+  { id: 'good-morning', name: '自重グッドモーニング', bodyParts: ['legs'], equipment: '自重', gymOnly: false, unilateral: false },
+  { id: 'cable-curl', name: 'ケーブルカール', bodyParts: ['arms'], equipment: 'ケーブルマシン', gymOnly: true, unilateral: false },
+  { id: 'wall-triceps-extension', name: '壁を使ったトライセプスエクステンション', bodyParts: ['arms'], equipment: '壁', gymOnly: false, unilateral: false },
+  { id: 'shallow-squat', name: '浅めの自重スクワット', bodyParts: ['legs'], equipment: '自重', gymOnly: false, unilateral: false },
 ];
 
 export type MenuItem = {

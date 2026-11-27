@@ -1,6 +1,7 @@
 # Run from the repository root after `npx supabase login` and deployment.
 # Creates a temporary session for the already-confirmed, allowed user without sending
 # an email or reading their password. Credentials stay in memory and are not printed.
+param([switch]$ReplacementOnly)
 $ErrorActionPreference = 'Stop'
 $sessionToken = $null
 $baseUrl = $null
@@ -44,7 +45,21 @@ try {
   $sessionToken = $session.access_token
   if (-not $sessionToken -or $session.user.id -ne $ownerId) { throw 'Could not authenticate the allowed test account.' }
   $headers = @{ apikey = $publicKey; Authorization = "Bearer $sessionToken" }
-  foreach ($gymAvailable in @($false, $true)) {
+  if ($ReplacementOnly) {
+    $first = @{ exerciseId = 'leg-press'; sets = 2; reps = 10; restSeconds = 60; reason = '脚の種目' }
+    $second = @{ exerciseId = 'glute-bridge'; sets = 2; reps = 10; restSeconds = 60; reason = 'お尻の種目' }
+    $replacement = @{ conditions = @{ bodyParts = @('legs'); gymAvailable = $true }; menu = @{ summary = '脚のメニュー'; items = @($first, $second) }; targetExerciseId = 'leg-press'; reason = 'equipment_busy'; exclusions = @{ equipment = @(); exerciseIds = @() } }
+    $response = Invoke-WebRequest -Uri "$baseUrl/functions/v1/replace-exercise" -Method Post -Headers $headers -ContentType 'application/json' -Body ($replacement | ConvertTo-Json -Depth 8) -SkipHttpErrorCheck -TimeoutSec 75
+    $payload = $response.Content | ConvertFrom-Json
+    [pscustomobject]@{ Check = 'Live Gemini replacement'; Status = [int]$response.StatusCode; CandidateCount = @($payload.candidates).Count; ExerciseIds = @($payload.candidates.exerciseId); ErrorCode = $payload.error.code } | ConvertTo-Json -Depth 3
+    if ([int]$response.StatusCode -ne 200 -or @($payload.candidates).Count -lt 1 -or @($payload.candidates.exerciseId | Where-Object { $_ -notin @('squat', 'shallow-squat', 'leg-extension') }).Count -gt 0) { throw 'Invalid live replacement result.' }
+    $replacement.menu.items = @(@{ exerciseId = 'calf-raise'; sets = 2; reps = 10; restSeconds = 60; reason = 'ふくらはぎの種目' }, $second)
+    $replacement.targetExerciseId = 'calf-raise'; $replacement.reason = 'too_difficult'
+    $empty = Invoke-WebRequest -Uri "$baseUrl/functions/v1/replace-exercise" -Method Post -Headers $headers -ContentType 'application/json' -Body ($replacement | ConvertTo-Json -Depth 8) -SkipHttpErrorCheck -TimeoutSec 30
+    $emptyPayload = $empty.Content | ConvertFrom-Json
+    if ([int]$empty.StatusCode -ne 200 -or @($emptyPayload.candidates).Count -ne 0) { throw 'No-candidate check failed.' }
+    Write-Output 'No-candidate response returned an empty list.'
+  } else { foreach ($gymAvailable in @($false, $true)) {
     $body = @{ bodyParts = @('legs'); gymAvailable = $gymAvailable } | ConvertTo-Json
     $response = Invoke-WebRequest -Uri "$baseUrl/functions/v1/generate-menu" -Method Post -Headers $headers -ContentType 'application/json' -Body $body -SkipHttpErrorCheck -TimeoutSec 75
     $payload = $response.Content | ConvertFrom-Json
@@ -54,7 +69,7 @@ try {
     }
     if (-not $payload.menu.items -or $payload.menu.items.Count -lt 2) { throw 'No valid menu was returned.' }
     [pscustomobject]@{ Check = 'Live Gemini proposal'; GymAvailable = $gymAvailable; Status = [int]$response.StatusCode; ItemCount = $payload.menu.items.Count; ExerciseIds = @($payload.menu.items.exerciseId) } | ConvertTo-Json -Depth 3
-  }
+  } }
 } catch {
   # Do not dump HTTP exception objects, headers, raw CLI output, or link/session bodies.
   Write-Output 'Deployment smoke test did not finish successfully.'

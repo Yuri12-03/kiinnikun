@@ -5,8 +5,10 @@ import { Redirect, router } from 'expo-router';
 import { BODY_PARTS, EXERCISES, estimateMinutes, type MenuItem } from '../../../supabase/functions/_shared/menu';
 import { Brand, Button, Card, colors, styles } from '../components/ui';
 import { useWorkout } from '../state/workout';
+import type { Proposal } from '../state/proposal';
+import { ReplacementSheet } from '../components/replacement-sheet';
 
-function ExerciseCard({ item, index }: { item: MenuItem; index: number }) {
+function ExerciseCard({ item, index, unavailable, onReplace }: { item: MenuItem; index: number; unavailable: boolean; onReplace: () => void }) {
   const [expanded, setExpanded] = useState(false);
   const exercise = EXERCISES.find(({ id }) => id === item.exerciseId)!;
   return <Card>
@@ -26,11 +28,15 @@ function ExerciseCard({ item, index }: { item: MenuItem; index: number }) {
       <Text style={styles.textLink}>選んだ理由を見る　{expanded ? '−' : '＋'}</Text>
     </Pressable>
     {expanded && <Text style={styles.subtitle}>{item.reason}</Text>}
+    {unavailable && <Text style={styles.errorText}>この器具は使えない設定です。別の種目への変更を選べます。</Text>}
+    <Button secondary label="別の種目に変更" onPress={onReplace} />
   </Card>;
 }
 
 export default function MenuScreen() {
   const { proposal } = useWorkout();
+  const [sheet, setSheet] = useState<{ snapshot: Proposal; targetId: string } | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   if (!proposal) return <Redirect href="/" />;
   const { conditions, menu } = proposal;
   const back = () => { if (router.canGoBack()) router.back(); else router.replace('/'); };
@@ -48,11 +54,15 @@ export default function MenuScreen() {
         <Text style={{ color: '#D6DFD2', fontSize: 12, lineHeight: 21 }}>{menu.summary}</Text>
         <Text style={{ color: '#BFCEBB', fontSize: 10 }}>所要時間は動作・休憩・種目間の移動を含む目安です。</Text>
       </View>
-      {menu.items.map((item, index) => <ExerciseCard key={item.exerciseId} item={item} index={index} />)}
+      {notice && <Text accessibilityLiveRegion="polite" style={[styles.subtitle, { color: colors.green }]}>{notice}</Text>}
+      {menu.items.map((item, index) => <ExerciseCard key={item.exerciseId} item={item} index={index}
+        unavailable={Boolean(proposal.exclusions?.equipment.includes(EXERCISES.find(({ id }) => id === item.exerciseId)!.equipment))}
+        onReplace={() => { setNotice(null); setSheet({ snapshot: proposal, targetId: item.exerciseId }); }} />)}
       <Text style={styles.subtitle}>無理のない負荷で、フォームを確認しながら行いましょう。痛みがある場合は中止してください。</Text>
       <Button secondary label="条件を変えて作り直す" onPress={back} />
       <Text style={[styles.subtitle, { fontSize: 11, textAlign: 'center' }]}>このメニューはまだ保存されていません。</Text>
     </ScrollView>
+    {sheet && <ReplacementSheet snapshot={sheet.snapshot} targetId={sheet.targetId} onClose={() => setSheet(null)} onApplied={(name) => setNotice(`${name}に変更しました。`)} />}
   </SafeAreaView>;
 }
 

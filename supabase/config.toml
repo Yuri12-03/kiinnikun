@@ -4,3 +4,6 @@ project_id = "kiinnikun"
 # The platform check is disabled only to avoid legacy-JWT/new-key incompatibility.
 [functions.generate-menu]
 verify_jwt = false
+
+[functions.replace-exercise]
+verify_jwt = false

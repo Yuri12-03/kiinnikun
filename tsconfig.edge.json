@@ -10,5 +10,5 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["supabase/functions/_shared/**/*.ts", "supabase/functions/generate-menu/handler.ts"]
+  "include": ["supabase/functions/_shared/**/*.ts", "supabase/functions/generate-menu/handler.ts", "supabase/functions/replace-exercise/handler.ts"]
 }
