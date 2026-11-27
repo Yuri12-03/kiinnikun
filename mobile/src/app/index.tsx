@@ -8,7 +8,8 @@ import { getSupabase, isConfigured } from '../lib/supabase';
 import { generateMenu } from '../lib/menu-api';
 import { useWorkout } from '../state/workout';
 import { DurationPicker } from '../components/duration-picker';
-import { RecommendedParts } from '../components/recommended-parts';
+import { BodyPartCard } from '../components/body-part-card';
+import { historyReason } from '../lib/training-history';
 import { useTrainingRecommendations } from '../state/use-training-recommendations';
 
 export default function HomeScreen() {
@@ -94,17 +95,15 @@ export default function HomeScreen() {
       </View>
 
       <View style={{ gap: 14 }}><View style={styles.row}><Text style={styles.heading}>01　鍛えたい部位</Text><Text style={styles.label}>複数選択OK</Text></View>
-        <RecommendedParts history={trainingHistory} selected={workout.bodyParts} onSelect={togglePart} disabled={busy} />
         <View style={local.grid}>{BODY_PARTS.map((part, index) => {
-          const selected = workout.bodyParts.includes(part.id);
-          return <Pressable key={part.id} accessibilityRole="checkbox" accessibilityLabel={part.label} accessibilityState={{ checked: selected, disabled: busy }}
-            disabled={busy} onPress={() => togglePart(part.id)} style={({ pressed }) => [local.part, selected && local.selectedPart, pressed && { opacity: 0.8 }]}>
-            <View style={styles.row}><Text style={[local.partNumber, selected && local.lightText]}>0{index + 1}</Text>
-              <Text style={[local.check, selected && local.lightText]}>{selected ? '✓' : '＋'}</Text></View>
-            <Text style={[local.partName, selected && local.lightText]}>{part.label}</Text>
-            <Text style={[local.partHint, selected && { color: '#BFCEBB' }]}>{part.hint}</Text>
-          </Pressable>;
+          const recommended = trainingHistory.status === 'ready' ? trainingHistory.recommendations.find(({ id }) => id === part.id) : undefined;
+          return <BodyPartCard key={part.id} part={part} index={index} selected={workout.bodyParts.includes(part.id)} disabled={busy}
+            recommendationReason={recommended ? historyReason(recommended, trainingHistory.now) : undefined} onPress={() => togglePart(part.id)} />;
         })}</View>
+        {trainingHistory.status === 'loading' && <Text style={local.recommendationNote}>おすすめの部位を確認しています…</Text>}
+        {trainingHistory.status === 'error' && <View style={{ gap: 4 }}><Text style={local.recommendationNote}>おすすめの部位を読み込めませんでした。</Text>
+          <Pressable accessibilityRole="button" disabled={busy} onPress={trainingHistory.refresh}><Text style={styles.textLink}>もう一度読み込む</Text></Pressable></View>}
+        {trainingHistory.status === 'ready' && trainingHistory.recommendations.length === 0 && <Text style={local.recommendationNote}>おすすめの部位はありません</Text>}
       </View>
 
       <View style={{ gap: 14 }}><Text style={styles.heading}>02　ジムは使える？</Text>
@@ -153,13 +152,7 @@ export default function HomeScreen() {
 
 const local = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  part: { width: '31%', flexGrow: 1, padding: 16, gap: 6, borderRadius: 16, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.white, minHeight: 120 },
-  selectedPart: { backgroundColor: colors.green, borderColor: colors.green },
-  partNumber: { color: '#9BA494', fontSize: 10, fontWeight: '700' },
-  partName: { fontSize: 23, fontWeight: '700', color: colors.ink, marginTop: 5 },
-  partHint: { fontSize: 8, color: colors.muted, letterSpacing: 0.7, fontWeight: '600' },
-  check: { fontSize: 14, color: colors.muted },
-  lightText: { color: colors.white },
+  recommendationNote: { fontSize: 11, color: colors.muted, lineHeight: 18 },
   gym: { flex: 1, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.white, padding: 16, borderRadius: 16, gap: 8 },
   selectedGym: { borderColor: colors.green, backgroundColor: colors.pale },
   gymTitle: { fontSize: 12, color: colors.ink, fontWeight: '700' },
