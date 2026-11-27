@@ -7,6 +7,7 @@ import { Brand, Button, Card, colors, styles } from '../components/ui';
 import { useWorkout } from '../state/workout';
 import type { Proposal } from '../state/proposal';
 import { ReplacementSheet } from '../components/replacement-sheet';
+import { ExerciseGuide } from '../components/exercise-guide';
 
 function ExerciseCard({ item, index, unavailable, onReplace }: { item: MenuItem; index: number; unavailable: boolean; onReplace: () => void }) {
   const [expanded, setExpanded] = useState(false);
@@ -24,6 +25,7 @@ function ExerciseCard({ item, index, unavailable, onReplace }: { item: MenuItem;
       <View style={local.metric}><Text style={styles.label}>{exercise.unilateral ? '左右それぞれ' : '回数'}</Text><Text style={local.value}>{item.reps}<Text style={local.unit}> 回</Text></Text></View>
       <View style={local.metric}><Text style={styles.label}>セット間休憩</Text><Text style={local.value}>{item.restSeconds}<Text style={local.unit}> 秒</Text></Text></View>
     </View>
+    <ExerciseGuide exerciseId={exercise.id} />
     <Pressable accessibilityRole="button" accessibilityState={{ expanded }} onPress={() => setExpanded(!expanded)}>
       <Text style={styles.textLink}>選んだ理由を見る　{expanded ? '−' : '＋'}</Text>
     </Pressable>
@@ -48,6 +50,7 @@ export default function MenuScreen() {
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           <Text style={local.tag}>{BODY_PARTS.filter(({ id }) => conditions.bodyParts.includes(id)).map(({ label }) => label).join('・')}</Text>
           <Text style={local.tag}>{conditions.gymAvailable ? 'ジムあり' : '器具なし'}</Text>
+          {conditions.durationMinutes !== undefined && <Text style={local.tag}>目安 {conditions.durationMinutes}分</Text>}
         </View>
       </View>
       <View style={local.overview}><Text style={{ color: 'white', fontWeight: '700', fontSize: 17 }}>全{menu.items.length}種目　/　約{estimateMinutes(menu)}分</Text>

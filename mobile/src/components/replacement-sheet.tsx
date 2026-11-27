@@ -7,6 +7,7 @@ import { suggestReplacements } from '../lib/menu-api';
 import { useWorkout } from '../state/workout';
 import type { Proposal } from '../state/proposal';
 import { Button, Card, colors, styles } from './ui';
+import { ExerciseGuide } from './exercise-guide';
 
 export function ReplacementSheet({ snapshot, targetId, onClose, onApplied }: {
   snapshot: Proposal; targetId: string; onClose: () => void; onApplied: (name: string) => void;
@@ -89,6 +90,7 @@ export function ReplacementSheet({ snapshot, targetId, onClose, onApplied }: {
                 return <Card key={exercise.id}><Text style={styles.heading}>{exercise.name}</Text><Text style={styles.subtitle}>{exercise.equipment} ／ {EXERCISE_PROFILES[exercise.id].focus}</Text>
                   <Text style={local.metrics}>{candidate.sets}セット × {candidate.reps}回{exercise.unilateral ? '（左右それぞれ）' : ''}　休憩{candidate.restSeconds}秒</Text>
                   <Text style={styles.subtitle}>{candidate.reason}</Text>
+                  <ExerciseGuide exerciseId={exercise.id} />
                   <Button label={`この種目に変更：${exercise.name}`} onPress={() => apply(candidate)} />
                 </Card>;
               })}</>}

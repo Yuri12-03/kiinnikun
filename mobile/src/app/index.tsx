@@ -7,6 +7,7 @@ import { Brand, Button, Card, colors, styles } from '../components/ui';
 import { getSupabase, isConfigured } from '../lib/supabase';
 import { generateMenu } from '../lib/menu-api';
 import { useWorkout } from '../state/workout';
+import { DurationPicker } from '../components/duration-picker';
 
 export default function HomeScreen() {
   const workout = useWorkout();
@@ -64,7 +65,7 @@ export default function HomeScreen() {
     setBusy(true); setError(null);
     const timeout = setTimeout(() => controller.abort(), 70_000);
     try {
-      const conditions = parseConditions({ bodyParts: workout.bodyParts, gymAvailable: workout.gymAvailable });
+      const conditions = parseConditions({ bodyParts: workout.bodyParts, gymAvailable: workout.gymAvailable, durationMinutes: workout.durationMinutes });
       const menu = await generateMenu(conditions, controller.signal);
       if (!alive.current) return;
       workout.setProposal({ conditions, menu });
@@ -84,7 +85,7 @@ export default function HomeScreen() {
       <Brand />
       <View style={{ gap: 12, paddingTop: 12 }}><Text style={styles.eyebrow}>MAKE TODAY A STRONGER DAY</Text>
         <Text style={styles.title}>今日は、どこを{ '\n' }鍛えよう。</Text>
-        <Text style={styles.subtitle}>あなたに合うメニューを、AIと一緒に。{ '\n' }部位と場所を選んで、今日のトレーニングへ。</Text>
+        <Text style={styles.subtitle}>あなたに合うメニューを、AIと一緒に。{ '\n' }部位と場所、使える時間を選んで始めよう。</Text>
       </View>
 
       <View style={{ gap: 14 }}><View style={styles.row}><Text style={styles.heading}>01　鍛えたい部位</Text><Text style={styles.label}>複数選択OK</Text></View>
@@ -110,6 +111,8 @@ export default function HomeScreen() {
           </Pressable>;
         })}</View>
       </View>
+
+      <DurationPicker value={workout.durationMinutes} onChange={(minutes) => { workout.setDurationMinutes(minutes); setError(null); }} disabled={busy} />
 
       {!isConfigured && <Card><Text style={styles.heading}>AIへの接続を準備中です</Text>
         <Text style={styles.subtitle}>メニュー提案は接続設定が完了すると利用できます。部位と場所は先に選べます。</Text></Card>}

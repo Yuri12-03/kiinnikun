@@ -81,3 +81,21 @@ test('server configuration failure makes no upstream calls', async () => {
   assert.equal((await handler(request())).status, 503);
   assert.equal(called, false);
 });
+
+test('passes the selected duration and time calculation to Gemini', async () => {
+  const { handler, calls } = setup();
+  const response = await handler(request({ bodyParts: ['legs'], gymAvailable: false, durationMinutes: 15 }));
+  assert.equal(response.status, 200);
+  const payload = JSON.parse(String(calls[2].init?.body));
+  const prompt = JSON.parse(payload.contents[0].parts[0].text);
+  assert.equal(prompt.conditions.durationMinutes, 15);
+  assert.ok(prompt.timeGuidance.includes('900秒以下'));
+});
+
+test('invalid duration does not use quota; an overlong AI result is not returned', async () => {
+  const invalid = setup();
+  assert.equal((await invalid.handler(request({ bodyParts: ['legs'], gymAvailable: false, durationMinutes: 12 }))).status, 400);
+  assert.equal(invalid.calls.length, 1);
+  const overlong = setup({ output: { ...menu, items: menu.items.map((item) => ({ ...item, sets: 4, reps: 20, restSeconds: 180 })) } });
+  assert.equal((await overlong.handler(request({ bodyParts: ['legs'], gymAvailable: false, durationMinutes: 10 }))).status, 502);
+});

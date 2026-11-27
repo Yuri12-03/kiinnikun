@@ -3,7 +3,7 @@
     "name": "きんに君",
     "slug": "kiinnikun",
     "scheme": "kiinnikun",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/kinni-icon.png",
     "userInterfaceStyle": "light",
@@ -12,7 +12,7 @@
     },
     "android": {
       "package": "com.yuri1203.kiinnikun",
-      "versionCode": 2,
+      "versionCode": 3,
       "adaptiveIcon": {
         "backgroundColor": "#294B3A",
         "foregroundImage": "./assets/kinni-adaptive-foreground.png",

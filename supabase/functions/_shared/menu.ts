@@ -8,7 +8,9 @@ export const BODY_PARTS = [
 ] as const;
 
 export type BodyPart = typeof BODY_PARTS[number]['id'];
-export type Conditions = { bodyParts: BodyPart[]; gymAvailable: boolean };
+export const WORKOUT_DURATION = { min: 10, max: 60, step: 5, default: 30 } as const;
+// Optional for compatibility with previously installed APKs, which do not send a duration.
+export type Conditions = { bodyParts: BodyPart[]; gymAvailable: boolean; durationMinutes?: number };
 export type Exercise = {
   id: string;
   name: string;
@@ -79,7 +81,12 @@ export function parseConditions(value: unknown): Conditions {
       new Set(value.bodyParts).size !== value.bodyParts.length) {
     throw new MenuError('INVALID_INPUT', '鍛えたい部位とジムの利用可否を選んでください。');
   }
-  return { bodyParts: value.bodyParts as BodyPart[], gymAvailable: value.gymAvailable };
+  const duration = value.durationMinutes;
+  if (duration !== undefined && (!integerIn(duration, WORKOUT_DURATION.min, WORKOUT_DURATION.max) || duration % WORKOUT_DURATION.step !== 0)) {
+    throw new MenuError('INVALID_INPUT', 'トレーニング時間は10〜60分の間で、5分刻みで選んでください。');
+  }
+  return { bodyParts: value.bodyParts as BodyPart[], gymAvailable: value.gymAvailable,
+    ...(duration !== undefined ? { durationMinutes: duration as number } : {}) };
 }
 
 export function candidatesFor(conditions: Conditions): Exercise[] {
@@ -114,7 +121,9 @@ export function parseMenu(value: unknown, conditions: Conditions): Menu {
     return { exerciseId: exercise.id, sets: item.sets, reps: item.reps, restSeconds: item.restSeconds, reason: item.reason.trim() };
   });
   if (conditions.bodyParts.some((part) => !covered.has(part))) throw invalid();
-  return { summary: value.summary.trim(), items };
+  const menu = { summary: value.summary.trim(), items };
+  if (conditions.durationMinutes !== undefined && estimateMinutes(menu) > conditions.durationMinutes) throw invalid();
+  return menu;
 }
 
 export function menuSchema(conditions: Conditions) {
@@ -148,4 +157,9 @@ export function estimateMinutes(menu: Menu): number {
       Math.max(0, item.sets - 1) * item.restSeconds + 60;
   }, 0);
   return Math.ceil(seconds / 60);
+}
+
+export function durationGuidance(conditions: Conditions): string | undefined {
+  if (conditions.durationMinutes === undefined) return undefined;
+  return `所要時間の目安は${conditions.durationMinutes}分です。各種目の秒数を「セット数×回数×4秒×左右係数＋(セット数−1)×休憩秒＋60秒」で計算し、全種目の合計が${conditions.durationMinutes * 60}秒以下になるようにしてください。左右係数はunilateralがtrueなら2、それ以外は1です。代替提案では差し替え後のメニュー全体で計算します。種目数とセット数で調整し、短い時間では1セットも使えます。できる範囲で希望時間に近づけますが、時間を埋めるために無理に負荷・反復回数・休憩を増やさないでください。候補が少ない場合は短く終了して構いません。`;
 }

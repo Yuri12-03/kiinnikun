@@ -1,7 +1,7 @@
 # Run from the repository root after `npx supabase login` and deployment.
 # Creates a temporary session for the already-confirmed, allowed user without sending
 # an email or reading their password. Credentials stay in memory and are not printed.
-param([switch]$ReplacementOnly)
+param([switch]$ReplacementOnly, [switch]$DurationOnly)
 $ErrorActionPreference = 'Stop'
 $sessionToken = $null
 $baseUrl = $null
@@ -45,7 +45,22 @@ try {
   $sessionToken = $session.access_token
   if (-not $sessionToken -or $session.user.id -ne $ownerId) { throw 'Could not authenticate the allowed test account.' }
   $headers = @{ apikey = $publicKey; Authorization = "Bearer $sessionToken" }
-  if ($ReplacementOnly) {
+  if ($DurationOnly) {
+    foreach ($durationMinutes in @(10, 30)) {
+      $conditions = @{ bodyParts = @('legs'); gymAvailable = $true; durationMinutes = $durationMinutes }
+      $response = Invoke-WebRequest -Uri "$baseUrl/functions/v1/generate-menu" -Method Post -Headers $headers -ContentType 'application/json' -Body ($conditions | ConvertTo-Json) -SkipHttpErrorCheck -TimeoutSec 75
+      $payload = $response.Content | ConvertFrom-Json
+      if ([int]$response.StatusCode -ne 200) { throw "Duration generation failed: HTTP $([int]$response.StatusCode), $($payload.error.code)" }
+      $seconds = 0
+      foreach ($entry in $payload.menu.items) { $seconds += $entry.sets * $entry.reps * 4 + [Math]::Max(0, $entry.sets - 1) * $entry.restSeconds + 60 }
+      $estimated = [Math]::Ceiling($seconds / 60)
+      $legIds = @('squat', 'glute-bridge', 'calf-raise', 'leg-press', 'leg-curl', 'leg-extension', 'good-morning', 'shallow-squat')
+      if (@($payload.menu.items).Count -lt 2 -or @($payload.menu.items.exerciseId | Where-Object { $_ -notin $legIds }).Count -gt 0 -or $estimated -gt $durationMinutes) { throw 'Invalid duration-based menu.' }
+      [pscustomobject]@{ Check = 'Live Gemini duration'; RequestedMinutes = $durationMinutes; EstimatedMinutes = $estimated; ExerciseCount = @($payload.menu.items).Count; Sets = @($payload.menu.items.sets) } | ConvertTo-Json -Compress
+      New-Item -ItemType Directory -Path artifacts -Force | Out-Null
+      @{ conditions = $conditions; menu = $payload.menu } | ConvertTo-Json -Depth 8 | Set-Content "artifacts/duration-$durationMinutes.json"
+    }
+  } elseif ($ReplacementOnly) {
     $first = @{ exerciseId = 'leg-press'; sets = 2; reps = 10; restSeconds = 60; reason = '脚の種目' }
     $second = @{ exerciseId = 'glute-bridge'; sets = 2; reps = 10; restSeconds = 60; reason = 'お尻の種目' }
     $replacement = @{ conditions = @{ bodyParts = @('legs'); gymAvailable = $true }; menu = @{ summary = '脚のメニュー'; items = @($first, $second) }; targetExerciseId = 'leg-press'; reason = 'equipment_busy'; exclusions = @{ equipment = @(); exerciseIds = @() } }

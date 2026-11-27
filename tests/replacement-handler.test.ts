@@ -43,6 +43,16 @@ test('returns validated alternatives and sends only filtered candidates to Gemin
   const payload = JSON.parse(String(calls[2].init?.body)), prompt = JSON.parse(payload.contents[0].parts[0].text);
   assert.ok(prompt.candidates.every((candidate: { focus: string; id: string }) => candidate.focus === '太もも前側' && candidate.id !== 'leg-press'));
 });
+
+test('replacement prompt includes the selected duration and whole-menu time constraint', async () => {
+  const { calls, handler } = setup();
+  const response = await handler(request({ ...input, conditions: { ...input.conditions, durationMinutes: 10 } }));
+  assert.equal(response.status, 200);
+  const payload = JSON.parse(String(calls[2].init?.body));
+  const prompt = JSON.parse(payload.contents[0].parts[0].text);
+  assert.equal(prompt.conditions.durationMinutes, 10);
+  assert.ok(prompt.timeGuidance.includes('600秒以下'));
+});
 test('rejects invalid AI candidates and sanitizes failures and timeouts', async () => {
   for (const options of [{ output: { candidates: [item('calf-raise')] } }, { aiStatus: 429 }, { aiStatus: 500 }, { timeout: true }]) {
     const { handler } = setup(options); const response = await handler(request()); assert.ok(response.status >= 400);

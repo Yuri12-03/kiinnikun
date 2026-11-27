@@ -1,8 +1,9 @@
 {
   "name": "@kiinnikun/mobile",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "expo-router/entry",
   "dependencies": {
+    "@react-native-community/slider": "5.2.1",
     "@supabase/supabase-js": "^2.119.2",
     "expo": "~58.0.26",
     "expo-constants": "~58.0.16",
