@@ -21,6 +21,14 @@
 - ブラウザ：クリックによる変更、矢印キーの5分刻み、10分・60分での上下限制御、表示値と読み上げ値の一致を確認。
 - Android実機でのスワイプ操作と上書きインストール後の確認は別途必要。
 
+## Android APK
+
+- [EASビルド](https://expo.dev/accounts/yuri12-03/projects/kiinnikun/builds/dc33ced4-d978-4748-a086-1db8c7322609)：成功。
+- [バージョン1.0.2のAPK](https://expo.dev/artifacts/eas/zoDplC2QcDqQJvXKvxxfOTtk8qX7t8XswYQWxWuUhzc.apk)。新しい名前とアイコンを含む。
+- APK内のAndroid Manifest・ネイティブライブラリ・埋め込みJSバンドル・日本語のアプリ名を確認。
+- 既存の1.0.0 APKと署名用証明書が一致することを確認。
+- SHA-256：`FA3DE25966D85E8226B1020701632706F4A452987E4A38DB90815784EB50425A`。
+
 画面：[スライダーの検証画像](screenshots/duration-slider.jpg)。
 
 ## 参照
