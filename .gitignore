@@ -155,6 +155,15 @@ test-results/
 playwright-report/
 supabase/.temp/
 
+# Android build output and signing credentials
+artifacts/
+dist-apk-check/
+*.apk
+*.aab
+*.jks
+*.keystore
+credentials.json
+
 # Turbo Repo (https://turborepo.dev/)
 .turbo
 

@@ -63,6 +63,40 @@ npm run start:tunnel
 
 SDKの不一致やJavaScriptのエラーはトンネルでは解決しないため、Expo Goの「View error log」の内容を確認します。
 
+## AndroidのAPKを作る
+
+`mobile/eas.json`の`preview`は、Expo Goや開発用PCなしで起動できる署名付きAPKを作成します。AIの利用にはインターネット接続と本人用アカウントが必要です。
+
+初回はExpoアカウントでログインし、`mobile`ディレクトリからEASプロジェクトを作成・接続します。
+
+```powershell
+npx --yes eas-cli@latest login
+cd mobile
+npx --yes eas-cli@latest init
+```
+
+EASの`preview`環境には、`mobile/.env.local`と同じ`EXPO_PUBLIC_SUPABASE_URL`と`EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`を登録します。ローカルの`.env.local`はクラウドへ送りません。GeminiキーやSupabaseの管理用キーは登録しません。公開用設定が足りない場合はビルドを停止します。
+
+```powershell
+# mobileディレクトリで実行
+npx --yes eas-cli@latest build --platform android --profile preview
+```
+
+Windowsでアップロード前の`git clone`が失敗する場合は、次の公式のNo VCS方式で再実行できます。リポジトリ全体を対象にし、ルートの`.easignore`で秘密情報や不要なファイルを除外します。
+
+```powershell
+# mobileディレクトリで実行
+$env:EAS_NO_VCS='1'
+$env:EAS_PROJECT_ROOT=(Resolve-Path '..').Path
+npx --yes eas-cli@latest build --platform android --profile preview
+```
+
+[Expo公式のアップロード方式](https://docs.expo.dev/build-reference/project-upload/)
+
+完了後のビルド画面からAPKをAndroidにダウンロードして開き、ブラウザなどからのインストールを端末側で許可します。インストール後はホーム画面から起動できます。Expo Goとは別のアプリなので、最初に本人用アカウントでログインします。[Expo公式のAPKビルド手順](https://docs.expo.dev/build-reference/apk/)
+
+コードを変更した場合はAPKを再ビルドします。同じアプリへの更新には同じ署名鍵を使い、`android.versionCode`を増やします。EASで管理する署名鍵を作り直さないでください。
+
 ## 2. Geminiの無料枠を準備する
 
 1. [Google AI StudioのAPI keys](https://aistudio.google.com/api-keys)でプロジェクトとAPIキーを作成します。

@@ -31,7 +31,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "eas-build-post-install": "node verify-build-env.cjs"
   },
   "private": true
 }
