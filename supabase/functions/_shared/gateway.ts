@@ -1,4 +1,4 @@
-import { MenuError } from './menu.ts';
+import { MenuError, type BodyPart } from './menu.ts';
 
 export type Dependencies = { env: (name: string) => string | undefined; fetch: typeof fetch };
 export type Settings = { url: string; anonKey: string; geminiKey: string; ownerId: string; model: string };
@@ -50,6 +50,13 @@ export async function askGemini(config: Settings, deps: Dependencies, instructio
   if (candidate?.finishReason !== 'STOP' || !Array.isArray(candidate.content?.parts)) throw new MenuError('INVALID_RESPONSE', '提案を最後まで取得できませんでした。もう一度お試しください。', 502);
   const text = candidate.content.parts.filter((part: { thought?: boolean }) => !part.thought).map((part: { text?: string }) => part.text || '').join('');
   try { return JSON.parse(text); } catch { throw new MenuError('INVALID_RESPONSE', '提案を読み取れませんでした。もう一度お試しください。', 502); }
+}
+export async function recordGeneratedTraining(config: Settings, headers: Record<string, string>, deps: Dependencies, bodyParts: BodyPart[]) {
+  const response = await deps.fetch(`${config.url}/rest/v1/generated_training_history`, {
+    method: 'POST', headers: { ...headers, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+    body: JSON.stringify({ body_parts: bodyParts }), signal: AbortSignal.timeout(10_000),
+  });
+  if (!response.ok) throw new MenuError('HISTORY_SAVE_FAILED', 'メニューの生成履歴を記録できませんでした。時間を置いてお試しください。', 503);
 }
 export function errorResponse(error: unknown): Response {
   if (error instanceof MenuError) return json({ error: { code: error.code, message: error.message } }, error.status);

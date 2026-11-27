@@ -9,11 +9,11 @@ const item = (exerciseId: string, sets = 2) => ({ exerciseId, sets, reps: 10, re
 const menu = { summary: '短時間で脚を鍛えます。', items: [item('leg-press'), item('glute-bridge')] };
 
 test('duration accepts slider values and preserves compatibility with an older APK', () => {
-  for (let durationMinutes = 10; durationMinutes <= 60; durationMinutes += 5) {
+  for (let durationMinutes = 10; durationMinutes <= 120; durationMinutes += 5) {
     assert.equal(parseConditions({ ...input, durationMinutes }).durationMinutes, durationMinutes);
   }
   assert.deepEqual(parseConditions({ bodyParts: ['legs'], gymAvailable: true }), { bodyParts: ['legs'], gymAvailable: true });
-  for (const durationMinutes of [null, '30', 0, 5, 12, 30.5, 65, NaN, Infinity]) {
+  for (const durationMinutes of [null, '30', 0, 5, 12, 30.5, 125, NaN, Infinity]) {
     assert.throws(() => parseConditions({ ...input, durationMinutes }));
   }
 });

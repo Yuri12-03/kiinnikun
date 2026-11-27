@@ -1,11 +1,13 @@
 # Run from the repository root after `npx supabase login` and deployment.
 # Creates a temporary session for the already-confirmed, allowed user without sending
 # an email or reading their password. Credentials stay in memory and are not printed.
-param([switch]$ReplacementOnly, [switch]$DurationOnly)
+param([switch]$ReplacementOnly, [switch]$DurationOnly, [switch]$HistoryOnly)
 $ErrorActionPreference = 'Stop'
 $sessionToken = $null
 $baseUrl = $null
 $publicKey = $null
+$testHistoryId = $null
+$historyCleanupFailed = $false
 
 function Read-LocalSettings([string]$Path) {
   $values = @{}
@@ -45,7 +47,23 @@ try {
   $sessionToken = $session.access_token
   if (-not $sessionToken -or $session.user.id -ne $ownerId) { throw 'Could not authenticate the allowed test account.' }
   $headers = @{ apikey = $publicKey; Authorization = "Bearer $sessionToken" }
-  if ($DurationOnly) {
+  if ($HistoryOnly) {
+    $anonymous = Invoke-WebRequest -Uri "$baseUrl/rest/v1/rpc/get_training_history" -Method Post -Headers @{ apikey = $publicKey } -ContentType 'application/json' -Body '{}' -SkipHttpErrorCheck -TimeoutSec 15
+    if ([int]$anonymous.StatusCode -notin @(401, 403)) { throw 'Anonymous history access was not denied.' }
+    $historyResponse = Invoke-WebRequest -Uri "$baseUrl/rest/v1/rpc/get_training_history" -Method Post -Headers $headers -ContentType 'application/json' -Body '{}' -SkipHttpErrorCheck -TimeoutSec 15
+    if ([int]$historyResponse.StatusCode -ne 200) { throw 'Owner history read failed.' }
+    $insertHeaders = @{ apikey = $publicKey; Authorization = "Bearer $sessionToken"; Prefer = 'return=representation' }
+    $testRow = Invoke-RestMethod -Uri "$baseUrl/rest/v1/generated_training_history" -Method Post -Headers $insertHeaders -ContentType 'application/json' -Body '{"body_parts":["legs","core"]}' -TimeoutSec 15
+    $testHistoryId = @($testRow)[0].id
+    if ($testHistoryId -notmatch '^[0-9a-f-]{36}$') { throw 'Could not identify the test-only history row.' }
+    $read = Invoke-RestMethod -Uri "$baseUrl/rest/v1/rpc/get_training_history" -Method Post -Headers $headers -ContentType 'application/json' -Body '{}' -TimeoutSec 15
+    if (-not $read.serverNow -or -not $read.lastGeneratedAt.legs -or -not $read.lastGeneratedAt.core) { throw 'The selected parts were not aggregated.' }
+    $spoof = Invoke-WebRequest -Uri "$baseUrl/rest/v1/generated_training_history?id=eq.$testHistoryId" -Method Patch -Headers $headers -ContentType 'application/json' -Body '{"generated_at":"2099-01-01T00:00:00Z"}' -SkipHttpErrorCheck -TimeoutSec 15
+    if ([int]$spoof.StatusCode -ne 403) { throw 'History timestamps could be modified.' }
+    $invalid = Invoke-WebRequest -Uri "$baseUrl/functions/v1/generate-menu" -Method Post -Headers $headers -ContentType 'application/json' -Body '{"bodyParts":["legs"],"gymAvailable":true,"durationMinutes":125}' -SkipHttpErrorCheck -TimeoutSec 15
+    if ([int]$invalid.StatusCode -ne 400) { throw 'The duration maximum was not deployed.' }
+    Write-Output 'Verified owner history insert/read, selected-part aggregation, anonymous denial, immutable timestamps, and 125-minute rejection. No Gemini calls.'
+  } elseif ($DurationOnly) {
     foreach ($durationMinutes in @(10, 30)) {
       $conditions = @{ bodyParts = @('legs'); gymAvailable = $true; durationMinutes = $durationMinutes }
       $response = Invoke-WebRequest -Uri "$baseUrl/functions/v1/generate-menu" -Method Post -Headers $headers -ContentType 'application/json' -Body ($conditions | ConvertTo-Json) -SkipHttpErrorCheck -TimeoutSec 75
@@ -90,10 +108,19 @@ try {
   Write-Output 'Deployment smoke test did not finish successfully.'
   exit 1
 } finally {
+  # Remove only the exact test row returned by our insert, never other history.
+  if ($testHistoryId -match '^[0-9a-f-]{36}$' -and $adminHeaders) {
+    try {
+      $cleanup = Invoke-WebRequest -Uri "$baseUrl/rest/v1/generated_training_history?id=eq.$testHistoryId&user_id=eq.$ownerId" -Method Delete -Headers $adminHeaders -SkipHttpErrorCheck -TimeoutSec 15
+      if ([int]$cleanup.StatusCode -ne 204) { throw 'History cleanup failed' }
+      Write-Output 'Removed the test-only history row.'
+    } catch { Write-Output 'Test-only history cleanup failed.'; $historyCleanupFailed = $true }
+  }
   if ($sessionToken -and $baseUrl -and $publicKey) {
     try {
       $null = Invoke-WebRequest -Uri "$baseUrl/auth/v1/logout?scope=local" -Method Post -Headers @{ apikey = $publicKey; Authorization = "Bearer $sessionToken" } -SkipHttpErrorCheck -TimeoutSec 15
       Write-Output 'Temporary test session signed out.'
     } catch { Write-Output 'Temporary test session could not be signed out; its token was not saved.' }
   }
+  if ($historyCleanupFailed) { exit 1 }
 }

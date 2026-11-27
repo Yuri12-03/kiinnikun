@@ -63,7 +63,7 @@ export default function MenuScreen() {
         onReplace={() => { setNotice(null); setSheet({ snapshot: proposal, targetId: item.exerciseId }); }} />)}
       <Text style={styles.subtitle}>無理のない負荷で、フォームを確認しながら行いましょう。痛みがある場合は中止してください。</Text>
       <Button secondary label="条件を変えて作り直す" onPress={back} />
-      <Text style={[styles.subtitle, { fontSize: 11, textAlign: 'center' }]}>このメニューはまだ保存されていません。</Text>
+      <Text style={[styles.subtitle, { fontSize: 11, textAlign: 'center' }]}>選択した部位を生成履歴に記録しました。</Text>
     </ScrollView>
     {sheet && <ReplacementSheet snapshot={sheet.snapshot} targetId={sheet.targetId} onClose={() => setSheet(null)} onApplied={(name) => setNotice(`${name}に変更しました。`)} />}
   </SafeAreaView>;

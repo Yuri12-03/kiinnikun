@@ -7,11 +7,11 @@ export function DurationPicker({ value, onChange, disabled }: { value: number; o
     <Text style={styles.heading}>03　どのくらいトレーニングする？</Text>
     <Card>
       <View style={styles.row}>
-        <View style={{ gap: 5 }}><Text style={styles.label}>今日の目安</Text><Text style={styles.subtitle}>つまみを左右にスライド</Text></View>
+        <View style={{ flex: 1, gap: 5 }}><Text style={styles.label}>今日の目安</Text><Text style={styles.subtitle}>つまみを左右にスライド</Text></View>
         <Text style={local.value}>{value}<Text style={local.unit}> 分</Text></Text>
       </View>
       <DurationSlider value={value} onChange={onChange} disabled={disabled} />
-      <View style={styles.row}><Text style={styles.label}>10分</Text><Text style={styles.label}>60分</Text></View>
+      <View style={styles.row}><Text style={styles.label}>10分</Text><Text style={styles.label}>120分（2時間）</Text></View>
       <Text style={styles.subtitle}>選んだ時間に合わせて、種目数やセット数を調整します。条件によっては短いメニューになります。</Text>
       <Text style={local.hint}>動作・休憩・種目間の移動を含む目安です。準備運動や着替えの時間は含みません。</Text>
     </Card>

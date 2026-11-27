@@ -8,7 +8,7 @@ export const BODY_PARTS = [
 ] as const;
 
 export type BodyPart = typeof BODY_PARTS[number]['id'];
-export const WORKOUT_DURATION = { min: 10, max: 60, step: 5, default: 30 } as const;
+export const WORKOUT_DURATION = { min: 10, max: 120, step: 5, default: 30 } as const;
 // Optional for compatibility with previously installed APKs, which do not send a duration.
 export type Conditions = { bodyParts: BodyPart[]; gymAvailable: boolean; durationMinutes?: number };
 export type Exercise = {
@@ -83,7 +83,7 @@ export function parseConditions(value: unknown): Conditions {
   }
   const duration = value.durationMinutes;
   if (duration !== undefined && (!integerIn(duration, WORKOUT_DURATION.min, WORKOUT_DURATION.max) || duration % WORKOUT_DURATION.step !== 0)) {
-    throw new MenuError('INVALID_INPUT', 'トレーニング時間は10〜60分の間で、5分刻みで選んでください。');
+    throw new MenuError('INVALID_INPUT', 'トレーニング時間は10〜120分の間で、5分刻みで選んでください。');
   }
   return { bodyParts: value.bodyParts as BodyPart[], gymAvailable: value.gymAvailable,
     ...(duration !== undefined ? { durationMinutes: duration as number } : {}) };

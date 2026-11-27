@@ -8,10 +8,14 @@ import { getSupabase, isConfigured } from '../lib/supabase';
 import { generateMenu } from '../lib/menu-api';
 import { useWorkout } from '../state/workout';
 import { DurationPicker } from '../components/duration-picker';
+import { RecommendedParts } from '../components/recommended-parts';
+import { useTrainingRecommendations } from '../state/use-training-recommendations';
 
 export default function HomeScreen() {
   const workout = useWorkout();
   const [signedIn, setSignedIn] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const trainingHistory = useTrainingRecommendations(userId);
   const [authLoading, setAuthLoading] = useState(isConfigured);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,11 +33,12 @@ export default function HomeScreen() {
     supabase.auth.getSession().then(({ data, error: sessionError }) => {
       if (!alive.current) return;
       setSignedIn(Boolean(data.session));
+      setUserId(data.session?.user.id ?? null);
       setAuthLoading(false);
       if (sessionError) setError({ message: 'ログイン状態を確認できませんでした。入り直してください。', retry: false });
     }).catch(() => { if (alive.current) setAuthLoading(false); });
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (alive.current) setSignedIn(Boolean(session));
+      if (alive.current) { setSignedIn(Boolean(session)); setUserId(session?.user.id ?? null); }
     });
     const appState = AppState.addEventListener('change', (state) => {
       if (state === 'active') supabase.auth.startAutoRefresh();
@@ -63,7 +68,7 @@ export default function HomeScreen() {
     const controller = new AbortController();
     request.current = controller;
     setBusy(true); setError(null);
-    const timeout = setTimeout(() => controller.abort(), 70_000);
+    const timeout = setTimeout(() => controller.abort(), 90_000);
     try {
       const conditions = parseConditions({ bodyParts: workout.bodyParts, gymAvailable: workout.gymAvailable, durationMinutes: workout.durationMinutes });
       const menu = await generateMenu(conditions, controller.signal);
@@ -89,6 +94,7 @@ export default function HomeScreen() {
       </View>
 
       <View style={{ gap: 14 }}><View style={styles.row}><Text style={styles.heading}>01　鍛えたい部位</Text><Text style={styles.label}>複数選択OK</Text></View>
+        <RecommendedParts history={trainingHistory} selected={workout.bodyParts} onSelect={togglePart} disabled={busy} />
         <View style={local.grid}>{BODY_PARTS.map((part, index) => {
           const selected = workout.bodyParts.includes(part.id);
           return <Pressable key={part.id} accessibilityRole="checkbox" accessibilityLabel={part.label} accessibilityState={{ checked: selected, disabled: busy }}

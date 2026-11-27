@@ -33,6 +33,7 @@ async function invoke(endpoint: string, input: unknown, signal: AbortSignal) {
       DAILY_LIMIT: '今日の提案回数の上限に達しました。翌日（日本時間）にお試しください。',
       AI_RATE_LIMIT: 'Geminiの利用制限に達しました。時間を置いてお試しください。',
       SERVER_CONFIG: 'AIの接続準備がまだ完了していません。接続設定を確認してください。',
+      HISTORY_SAVE_FAILED: '生成履歴を記録できませんでした。時間を置いてお試しください。',
       INVALID_RESPONSE: '提案を正しく読み取れませんでした。もう一度お試しください。',
       TIMEOUT: '応答に時間がかかっています。もう一度お試しください。',
       INVALID_INPUT: '変更する種目と条件を確認してください。',

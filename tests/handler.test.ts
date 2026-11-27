@@ -14,12 +14,13 @@ const request = (body: unknown = { bodyParts: ['legs'], gymAvailable: false }, a
   method: 'POST', headers: auth ? { Authorization: 'Bearer session-token' } : {}, body: JSON.stringify(body),
 });
 
-function setup(options: { owner?: string; quota?: boolean; aiStatus?: number; output?: unknown; finish?: string; timeout?: boolean } = {}) {
+function setup(options: { owner?: string; quota?: boolean; aiStatus?: number; output?: unknown; finish?: string; timeout?: boolean; historyStatus?: number } = {}) {
   const calls: { url: string; init?: RequestInit }[] = [];
   const mockFetch: typeof fetch = async (input, init) => {
     const url = String(input); calls.push({ url, init });
     if (url.endsWith('/user')) return Response.json({ id: options.owner || 'owner' });
     if (url.includes('/rpc/')) return Response.json(options.quota ?? true);
+    if (url.endsWith('/generated_training_history')) return new Response(null, { status: options.historyStatus ?? 201 });
     if (options.timeout) throw new DOMException('Upstream timed out with sensitive info', 'TimeoutError');
     if (options.aiStatus) return Response.json({ secret: variables.GEMINI_API_KEY }, { status: options.aiStatus });
     return Response.json({ candidates: [{ finishReason: options.finish || 'STOP', content: { parts: [{ text: JSON.stringify(options.output ?? menu) }] } }] });
@@ -98,4 +99,36 @@ test('invalid duration does not use quota; an overlong AI result is not returned
   assert.equal(invalid.calls.length, 1);
   const overlong = setup({ output: { ...menu, items: menu.items.map((item) => ({ ...item, sets: 4, reps: 20, restSeconds: 180 })) } });
   assert.equal((await overlong.handler(request({ bodyParts: ['legs'], gymAvailable: false, durationMinutes: 10 }))).status, 502);
+});
+
+test('records selected parts once after validating a successful generation', async () => {
+  const { handler, calls } = setup();
+  assert.equal((await handler(request())).status, 200);
+  const writes = calls.filter(({ url }) => url.endsWith('/generated_training_history'));
+  assert.equal(writes.length, 1);
+  assert.deepEqual(JSON.parse(String(writes[0].init?.body)), { body_parts: ['legs'] });
+  assert.equal(calls.indexOf(writes[0]), 3);
+  assert.equal(new Headers(writes[0].init?.headers).get('Authorization'), 'Bearer session-token');
+});
+
+test('failed or invalid generations never record training history', async () => {
+  for (const options of [{ aiStatus: 429 }, { aiStatus: 500 }, { timeout: true }, { output: {} }, { finish: 'MAX_TOKENS' }, { quota: false }]) {
+    const { handler, calls } = setup(options);
+    assert.notEqual((await handler(request())).status, 200);
+    assert.ok(!calls.some(({ url }) => url.endsWith('/generated_training_history')));
+  }
+});
+
+test('a failed history write is reported without returning a successful menu', async () => {
+  const { handler } = setup({ historyStatus: 503 });
+  const response = await handler(request());
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), { error: { code: 'HISTORY_SAVE_FAILED', message: 'メニューの生成履歴を記録できませんでした。時間を置いてお試しください。' } });
+});
+
+test('a 120-minute request is accepted and reaches Gemini', async () => {
+  const { handler, calls } = setup();
+  assert.equal((await handler(request({ bodyParts: ['legs'], gymAvailable: false, durationMinutes: 120 }))).status, 200);
+  const prompt = JSON.parse(JSON.parse(String(calls[2].init?.body)).contents[0].parts[0].text);
+  assert.equal(prompt.conditions.durationMinutes, 120);
 });
