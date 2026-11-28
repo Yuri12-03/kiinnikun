@@ -18,3 +18,11 @@
 - 幅390pxと320pxの表示確認。[検証画像](screenshots/recommendation-badges.jpg)
 - この画像は部品の表示確認用データで、本人の実際のおすすめ結果ではない。
 - Android実機での最終的な表示・操作は別途確認。
+
+## 更新用APK（2026-11-28確認）
+
+- [EASビルド](https://expo.dev/accounts/yuri12-03/projects/kiinnikun/builds/caed2634-1a59-4c23-9252-1032e276491a)：成功。
+- [APK 1.0.4](https://expo.dev/artifacts/eas/zUD06-lN-tDD5Z-kPqg667wKkHLl1mVseYc6dHczW5U.apk)、versionCode 5。
+- APK内のManifest・コード・埋め込みJS・arm64ライブラリを確認。
+- 初回1.0.0のAPKと署名用証明書の一致を確認。
+- SHA-256：`4A91C8F135CA8B25957FDE553D9922E6EDD61345B0A768596F0AEF2D03E9F30D`。
